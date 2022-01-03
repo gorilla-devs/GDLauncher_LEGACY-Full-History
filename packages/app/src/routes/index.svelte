@@ -5,7 +5,7 @@
 <script>
 	import { getContext } from 'svelte';
 	const { theme, changeTheme, getThemes } = getContext('theme');
-	import { Button } from 'ui';
+	import { CheckBox, Button } from 'ui';
 
 	const themes = getThemes();
 	let currentTheme = theme.name;
@@ -38,6 +38,7 @@
 		}}>{$theme.name}</button
 	> -->
 	<Button size="large" variant="third" onClick={() => console.log('TEST')}>Large</Button>
+	<CheckBox />
 	<!-- <Button size="medium">Normal</Button> -->
 	<!-- <Button size="small">Small</Button> -->
 </section>
