@@ -81,6 +81,10 @@ export const _getInstancesPath = createSelector(_userData, userData =>
   userData ? path.join(userData, 'instances') : null
 );
 
+export const _getBackupsPath = createSelector(_userData, userData =>
+  userData ? path.join(userData, 'backups') : null
+);
+
 export const _getTempPath = createSelector(_userData, userData =>
   path.join(userData, 'temp')
 );

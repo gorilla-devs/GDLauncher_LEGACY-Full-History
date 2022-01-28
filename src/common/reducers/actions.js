@@ -1,7 +1,7 @@
 import axios from 'axios';
 import path from 'path';
 import { ipcRenderer } from 'electron';
-import { v5 as uuid } from 'uuid';
+import { v5 as uuid, v4 as uuidv4 } from 'uuid';
 import { machineId } from 'node-machine-id';
 import fse from 'fs-extra';
 import coerce from 'semver/functions/coerce';
@@ -74,6 +74,7 @@ import {
 import {
   _getAccounts,
   _getAssetsPath,
+  _getBackupsPath,
   _getCurrentAccount,
   _getCurrentDownloadItem,
   _getDataStorePath,
@@ -231,6 +232,18 @@ export function initManifests() {
         ? CFVersionIds.v
         : app.curseforgeVersionIds
     };
+  };
+}
+
+export function initBackups() {
+  return async (dispatch, getState) => {
+    const backupsPath = _getBackupsPath(getState());
+    const backups = await fs.readdir(backupsPath);
+
+    dispatch({
+      type: ActionTypes.ADD_BACKUPS,
+      backups: backups.map(backup => backup.split('.')[0])
+    });
   };
 }
 
@@ -3483,5 +3496,78 @@ export const checkForPortableUpdates = () => {
       );
     }
     return newVersion;
+  };
+};
+
+export const createBackup = instanceName => {
+  return async (dispatch, getState) => {
+    const backupsPath = _getBackupsPath(getState());
+    const backupName = `${uuidv4()}_${Date.now()}`;
+
+    dispatch({
+      type: ActionTypes.CREATE_BACKUP,
+      instanceName,
+      backup: backupName
+    });
+
+    await dispatch(
+      updateInstanceConfig(instanceName, prev => ({
+        ...prev,
+        backups: [...(prev?.backups || []), backupName]
+      }))
+    );
+
+    const backupsZipPath = path.join(backupsPath, `${backupName}.7z`);
+    await fse.ensureDir(backupsPath);
+
+    const instancePath = path.join(_getInstancesPath(getState()), instanceName);
+    const sevenZipPath = await get7zPath();
+    const zip = Seven.add(backupsZipPath, path.join(instancePath, '*'), {
+      recursive: true,
+      yes: true,
+      $bin: sevenZipPath,
+      $spawnOptions: { shell: true },
+      $progress: true
+    });
+
+    await new Promise((resolve, reject) => {
+      zip.on('progress', ({ percent }) => {
+        dispatch({
+          type: ActionTypes.UPDATE_BACKUPS_PROGRESS,
+          percentage: percent
+        });
+      });
+      zip.on('end', () => {
+        dispatch({
+          type: ActionTypes.RESET_BACKUP
+        });
+        resolve();
+      });
+      zip.on('error', err => {
+        dispatch({
+          type: ActionTypes.SET_BACKUP_ERROR,
+          error: err
+        });
+        reject(err);
+      });
+    });
+  };
+};
+
+export const deleteBackup = (instanceName, backupName) => {
+  return async dispatch => {
+    dispatch({
+      type: ActionTypes.REMOVE_BACKUP,
+      name: backupName
+    });
+
+    await dispatch(
+      updateInstanceConfig(instanceName, prev => ({
+        ...prev,
+        backups: [
+          ...(prev?.backups || []).filter(backup => backup !== backupName)
+        ]
+      }))
+    );
   };
 };

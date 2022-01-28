@@ -158,6 +158,50 @@ function latestModManifests(state = {}, action) {
   }
 }
 
+function backups(
+  state = { percentage: 0, instanceName: null, error: null, backups: [] },
+  action
+) {
+  switch (action.type) {
+    case ActionTypes.CREATE_BACKUP:
+      return {
+        ...state,
+        instanceName: action.instanceName,
+        backups: [...state.backups, action.backup]
+      };
+    case ActionTypes.ADD_BACKUPS:
+      return {
+        ...state,
+        backups: [...state.backups, ...action.backups]
+      };
+    case ActionTypes.REMOVE_BACKUP:
+      return {
+        ...state,
+        backups: state.backups.filter(backup => backup !== action.name)
+      };
+    case ActionTypes.RESET_BACKUP:
+      return {
+        ...state,
+        instanceName: null,
+        percentage: 0
+      };
+    case ActionTypes.SET_BACKUP_ERROR:
+      return {
+        ...state,
+        instanceName: null,
+        percentage: 0,
+        error: action.error
+      };
+    case ActionTypes.UPDATE_BACKUPS_PROGRESS:
+      return {
+        ...state,
+        percentage: action.percentage
+      };
+    default:
+      return state;
+  }
+}
+
 export default {
   userData,
   news,
@@ -168,5 +212,6 @@ export default {
   startedInstances,
   selectedInstance,
   updateAvailable,
-  latestModManifests
+  latestModManifests,
+  backups
 };

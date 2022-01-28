@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, Progress } from 'antd';
 import styled from 'styled-components';
+import { createBackup, deleteBackup } from '../../reducers/actions';
+import { _getInstance } from '../../utils/selectors';
 
 const Container = styled.div`
   padding: 0.5rem;
@@ -67,25 +70,38 @@ const Row = styled.div`
   }
 `;
 
-const Backups = () => {
+const Backups = ({ instanceName }) => {
   const [backups, setBackups] = useState([]);
 
+  const percentage = useSelector(state => state.backups.percentage);
+  const allBackups = useSelector(state => state.backups.backups);
+  const backupsInstanceName = useSelector(state => state.backups.instanceName);
+  const instanceConfig = useSelector(state =>
+    _getInstance(state)(instanceName)
+  );
+
+  const dispatch = useDispatch();
+
   useEffect(() => {
-    setBackups([
-      { name: 'Backup 1', key: 'Backup 1' },
-      { name: 'Backup 2', key: 'Backup 2' },
-      { name: 'Backup 3', key: 'Backup 3' },
-      { name: 'Backup 4', key: 'Backup 4' }
-    ]);
-  }, []);
+    const filteredBackups = allBackups.filter(bk =>
+      instanceConfig.backups.includes(bk)
+    );
+
+    setBackups(filteredBackups);
+  }, [allBackups]);
 
   return (
     <Container>
       <Header>
-        <Button type="primary" onClick={() => {}}>
+        <Button
+          type="primary"
+          onClick={() => {
+            dispatch(createBackup(instanceName));
+          }}
+        >
           Create Backup
         </Button>
-        <Progress percent={30} />
+        {backupsInstanceName && <Progress percent={percentage} />}
       </Header>
       <InnerContainer>
         {backups.length === 0 && (
@@ -93,8 +109,8 @@ const Backups = () => {
         )}
         {backups.length > 0 &&
           backups.map(backup => (
-            <Row key={backup?.key}>
-              {backup?.name}
+            <Row key={backup}>
+              {backup}
               <div
                 css={`
                   display: flex;
@@ -117,7 +133,9 @@ const Backups = () => {
                       }
                     }
                   `}
-                  onClick={() => {}}
+                  onClick={() => {
+                    dispatch(deleteBackup(instanceName, backup));
+                  }}
                   icon={faTrash}
                 />
               </div>

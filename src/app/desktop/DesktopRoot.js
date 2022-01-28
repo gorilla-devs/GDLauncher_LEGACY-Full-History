@@ -15,7 +15,8 @@ import {
   switchToFirstValidAccount,
   checkClientToken,
   updateUserData,
-  loginWithOAuthAccessToken
+  loginWithOAuthAccessToken,
+  initBackups
 } from '../../common/reducers/actions';
 import {
   load,
@@ -77,6 +78,7 @@ function DesktopRoot({ store }) {
     const userData = dispatch(updateUserData(userDataStatic));
     await dispatch(checkClientToken());
     dispatch(initNews());
+    dispatch(initBackups());
 
     const manifests = await dispatch(initManifests());
 
