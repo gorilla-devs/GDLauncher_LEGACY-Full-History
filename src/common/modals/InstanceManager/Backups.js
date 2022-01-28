@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button } from 'antd';
+import { Button, Progress } from 'antd';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -17,6 +17,7 @@ const Header = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+  gap: 10px;
 `;
 
 const NoItemsContainers = styled.div`
@@ -81,23 +82,10 @@ const Backups = () => {
   return (
     <Container>
       <Header>
-        <FontAwesomeIcon
-          css={`
-            &:hover {
-              cursor: pointer;
-              path {
-                cursor: pointer;
-                transition: all 0.1s ease-in-out;
-                color: ${props => props.theme.palette.error.main};
-              }
-            }
-          `}
-          onClick={() => {}}
-          icon={faTrash}
-        />
         <Button type="primary" onClick={() => {}}>
           Create Backup
         </Button>
+        <Progress percent={30} />
       </Header>
       <InnerContainer>
         {backups.length === 0 && (
@@ -107,20 +95,32 @@ const Backups = () => {
           backups.map(backup => (
             <Row key={backup?.key}>
               {backup?.name}
-              <FontAwesomeIcon
+              <div
                 css={`
-                  &:hover {
-                    cursor: pointer;
-                    path {
-                      cursor: pointer;
-                      transition: all 0.1s ease-in-out;
-                      color: ${props => props.theme.palette.error.main};
-                    }
-                  }
+                  display: flex;
+                  justify-content: space-between;
+                  align-ittems: center;
+                  gap: 1rem;
                 `}
-                onClick={() => {}}
-                icon={faTrash}
-              />
+              >
+                <Button type="primary" onClick={() => {}} size="small">
+                  Restore
+                </Button>
+                <FontAwesomeIcon
+                  css={`
+                    &:hover {
+                      cursor: pointer;
+                      path {
+                        cursor: pointer;
+                        transition: all 0.1s ease-in-out;
+                        color: ${props => props.theme.palette.error.main};
+                      }
+                    }
+                  `}
+                  onClick={() => {}}
+                  icon={faTrash}
+                />
+              </div>
             </Row>
           ))}
       </InnerContainer>
