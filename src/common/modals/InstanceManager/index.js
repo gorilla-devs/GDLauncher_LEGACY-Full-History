@@ -165,10 +165,13 @@ const menuEntries = {
   // servers: { name: "Servers", component: Overview }
 };
 
-const InstanceManager = ({ instanceName }) => {
+const InstanceManager = ({
+  instanceName,
+  initialPage = Object.keys(menuEntries)[0]
+}) => {
   const dispatch = useDispatch();
   const instancesPath = useSelector(_getInstancesPath);
-  const [page, setPage] = useState(Object.keys(menuEntries)[0]);
+  const [page, setPage] = useState(initialPage);
   const instance = useSelector(state => _getInstance(state)(instanceName));
   const [background, setBackground] = useState(instance?.background);
   const [manifest, setManifest] = useState(null);

@@ -14,10 +14,11 @@ import {
   faFolder,
   faTrash,
   faStop,
-  faBoxOpen,
   faCopy,
   faServer,
-  faHammer
+  faHammer,
+  faArchive,
+  faFileExport
 } from '@fortawesome/free-solid-svg-icons';
 import psTree from 'ps-tree';
 import { ContextMenuTrigger, ContextMenu, MenuItem } from 'react-contextmenu';
@@ -200,6 +201,11 @@ const Instance = ({ instanceName }) => {
   const manageInstance = () => {
     dispatch(openModal('InstanceManager', { instanceName }));
   };
+  const manageBackups = () => {
+    dispatch(
+      openModal('InstanceManager', { instanceName, initialPage: 'backups' })
+    );
+  };
   const openBisectModal = () => {
     dispatch(openModal('BisectHosting'));
   };
@@ -355,7 +361,7 @@ const Instance = ({ instanceName }) => {
             }
           >
             <FontAwesomeIcon
-              icon={faBoxOpen}
+              icon={faFileExport}
               css={`
                 margin-right: 10px;
                 width: 25px !important;
@@ -375,6 +381,16 @@ const Instance = ({ instanceName }) => {
               `}
             />
             Duplicate
+          </MenuItem>
+          <MenuItem disabled={Boolean(isInQueue)} onClick={manageBackups}>
+            <FontAwesomeIcon
+              icon={faArchive}
+              css={`
+                margin-right: 10px;
+                width: 25px !important;
+              `}
+            />
+            Backups
           </MenuItem>
           <MenuItem divider />
           <MenuItem
