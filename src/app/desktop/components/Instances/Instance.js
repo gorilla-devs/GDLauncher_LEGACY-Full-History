@@ -383,14 +383,36 @@ const Instance = ({ instanceName }) => {
             Duplicate
           </MenuItem>
           <MenuItem disabled={Boolean(isInQueue)} onClick={manageBackups}>
-            <FontAwesomeIcon
-              icon={faArchive}
+            <div
               css={`
-                margin-right: 10px;
-                width: 25px !important;
+                position: relative;
               `}
-            />
-            Backups
+            >
+              <FontAwesomeIcon
+                icon={faArchive}
+                css={`
+                  margin-right: 10px;
+                  width: 25px !important;
+                `}
+              />
+              Backups
+              <div
+                css={`
+                  position: absolute;
+                  right: 0;
+                  top: 50%;
+                  transform: translateY(-50%);
+                  background: ${({ theme }) => theme.palette.colors.green};
+                  border-radius: 6px;
+                  padding: 2px 7px;
+                  color: ${({ theme }) => theme.palette.common.white};
+                  font-size: 12px;
+                  font-weight: bold;
+                `}
+              >
+                NEW
+              </div>
+            </div>
           </MenuItem>
           <MenuItem divider />
           <MenuItem
