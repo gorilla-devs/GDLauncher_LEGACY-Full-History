@@ -160,6 +160,10 @@ const menuEntries = {
   screenshots: {
     name: 'Screenshots',
     component: AsyncComponent(lazy(() => import('./Screenshots')))
+  },
+  backups: {
+    name: 'Backups',
+    component: AsyncComponent(lazy(() => import('./Backups')))
   }
   // settings: { name: "Settings", component: Overview },
   // servers: { name: "Servers", component: Overview }
