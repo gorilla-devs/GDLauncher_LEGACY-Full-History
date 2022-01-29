@@ -177,7 +177,11 @@ const Backups = ({ instanceName }) => {
             onClick={() => {
               dispatch(createBackup(instanceName));
             }}
-            disabled={backupState.instanceName || isPlaying}
+            disabled={
+              (backupState.instanceName &&
+                backupState.instanceName === instanceName) ||
+              isPlaying
+            }
           >
             {backupState.instanceName &&
             backupState.instanceName === instanceName &&
@@ -270,7 +274,11 @@ const Backups = ({ instanceName }) => {
                       onClick={() =>
                         dispatch(restoreBackup(instanceName, backup.name))
                       }
-                      disabled={backupState.instanceName || isPlaying}
+                      disabled={
+                        (backupState.instanceName &&
+                          backupState.instanceName === backup.name) ||
+                        isPlaying
+                      }
                       size="small"
                     >
                       Restore

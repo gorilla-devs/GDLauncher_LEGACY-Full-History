@@ -34,7 +34,6 @@ const InstanceDeleteConfirmation = ({ instanceName }) => {
   }, 200);
 
   useEffect(() => {
-    console.log('TTTT', instanceConfig, instanceConfig?.backups);
     const filteredBackups = allBackups.filter(bk =>
       (instanceConfig?.backups || []).includes(bk.name)
     );
@@ -86,7 +85,7 @@ const InstanceDeleteConfirmation = ({ instanceName }) => {
             checked={deleteBackups}
             onChange={e => setDeleteBackups(e.target.checked)}
           >
-            delete all backups
+            Also delete backups associated with this instance
           </Checkbox>
         </div>
         <div
