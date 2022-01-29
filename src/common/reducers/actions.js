@@ -238,6 +238,7 @@ export function initManifests() {
 export function initBackups() {
   return async (dispatch, getState) => {
     const backupsPath = _getBackupsPath(getState());
+    await makeDir(backupsPath);
     const backupsFromDir = await fs.readdir(backupsPath);
 
     const backups = await Promise.all(
