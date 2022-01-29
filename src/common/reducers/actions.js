@@ -3635,11 +3635,16 @@ export const restoreBackup = (instanceName, backupName) => {
 };
 
 export const deleteBackup = (instanceName, backupName) => {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const backupsPath = _getBackupsPath(getState());
+    const backupsZipPath = path.join(backupsPath, `${backupName}.7z`);
+
     dispatch({
       type: ActionTypes.REMOVE_BACKUP,
       name: backupName
     });
+
+    await fse.remove(backupsZipPath);
 
     await dispatch(
       updateInstanceConfig(instanceName, prev => ({

@@ -179,7 +179,9 @@ const Backups = ({ instanceName }) => {
             }}
             disabled={backupState.instanceName || isPlaying}
           >
-            {backupState.instanceName && backupState.status === BACKUP_CREATION
+            {backupState.instanceName &&
+            backupState.instanceName === instanceName &&
+            backupState.status === BACKUP_CREATION
               ? 'Creating Backup'
               : 'Create Backup'}
           </Button>
@@ -188,9 +190,11 @@ const Backups = ({ instanceName }) => {
             icon={faFolder}
           />
         </div>
-        {backupState.instanceName && backupState.status === BACKUP_CREATION && (
-          <Progress percent={percentage} />
-        )}
+        {backupState.instanceName &&
+          backupState.instanceName === instanceName &&
+          backupState.status === BACKUP_CREATION && (
+            <Progress percent={percentage} />
+          )}
         <FontAwesomeIcon
           css={`
             margin-right: 1rem;

@@ -1,18 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import fse from 'fs-extra';
 import path from 'path';
-import { Button } from 'antd';
+import { Button, Checkbox } from 'antd';
 import { useInterval } from 'rooks';
 import { useSelector, useDispatch } from 'react-redux';
 import Modal from '../components/Modal';
-import { _getInstancesPath, _getInstances } from '../utils/selectors';
+import {
+  _getInstancesPath,
+  _getInstances,
+  _getInstance
+} from '../utils/selectors';
 import { closeModal } from '../reducers/modals/actions';
+import { deleteBackup } from '../reducers/actions';
 
 const InstanceDeleteConfirmation = ({ instanceName }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
+  const [deleteBackups, setDeleteBackups] = useState(false);
+  const [backups, setBackups] = useState([]);
   const instancesPath = useSelector(_getInstancesPath);
   const instances = useSelector(_getInstances);
+  const allBackups = useSelector(state => state.backups.backups);
+
+  const instanceConfig = useSelector(state =>
+    _getInstance(state)(instanceName)
+  );
 
   const { start, stop } = useInterval(() => {
     if (!instances.find(instance => instance.name === instanceName)) {
@@ -21,12 +33,26 @@ const InstanceDeleteConfirmation = ({ instanceName }) => {
     }
   }, 200);
 
+  useEffect(() => {
+    console.log('TTTT', instanceConfig, instanceConfig?.backups);
+    const filteredBackups = allBackups.filter(bk =>
+      (instanceConfig?.backups || []).includes(bk.name)
+    );
+
+    setBackups(filteredBackups);
+  }, [allBackups, instanceConfig]);
+
   const deleteInstance = async () => {
     setLoading(true);
     start();
     fse.remove(path.join(instancesPath, instanceName));
+    if (deleteBackups) {
+      backups.map(backup => dispatch(deleteBackup(instanceName, backup.name)));
+    }
   };
+
   const closeModalWindow = () => dispatch(closeModal());
+
   return (
     <Modal
       css={`
@@ -53,7 +79,19 @@ const InstanceDeleteConfirmation = ({ instanceName }) => {
         data you have in this instance
         <div
           css={`
-            margin-top: 50px;
+            margin: 1rem 0 0;
+          `}
+        >
+          <Checkbox
+            checked={deleteBackups}
+            onChange={e => setDeleteBackups(e.target.checked)}
+          >
+            delete all backups
+          </Checkbox>
+        </div>
+        <div
+          css={`
+            margin-top: 1rem;
             display: flex;
             width: 100%;
             justify-content: space-between;
