@@ -3618,11 +3618,20 @@ export const restoreBackup = (instanceName, backupName) => {
     });
 
     await new Promise((resolve, reject) => {
+      let progress = 0;
+
+      const debouncedProgress = debounce(percent => {
+        if (Math.floor(percent) !== progress) {
+          progress = Math.floor(percent);
+          dispatch({
+            type: ActionTypes.UPDATE_BACKUPS_PROGRESS,
+            percentage: percent
+          });
+        }
+      }, 40);
+
       extract.on('progress', ({ percent }) => {
-        dispatch({
-          type: ActionTypes.UPDATE_BACKUPS_PROGRESS,
-          percentage: percent
-        });
+        debouncedProgress(percent);
       });
       extract.on('end', () => {
         resolve();
