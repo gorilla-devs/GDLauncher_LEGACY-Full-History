@@ -159,13 +159,20 @@ function latestModManifests(state = {}, action) {
 }
 
 function backups(
-  state = { percentage: 0, instanceName: null, error: null, backups: [] },
+  state = {
+    percentage: 0,
+    instanceName: null,
+    error: null,
+    backups: [],
+    status: null
+  },
   action
 ) {
   switch (action.type) {
     case ActionTypes.CREATE_BACKUP:
       return {
         ...state,
+        status: action.status,
         instanceName: action.instanceName,
         backups: [...state.backups, ...(action?.backup || [])]
       };
@@ -183,7 +190,8 @@ function backups(
       return {
         ...state,
         instanceName: null,
-        percentage: 0
+        percentage: 0,
+        status: null
       };
     case ActionTypes.SET_BACKUP_ERROR:
       return {
@@ -196,6 +204,12 @@ function backups(
       return {
         ...state,
         percentage: action.percentage
+      };
+    case ActionTypes.START_RESTORE:
+      return {
+        ...state,
+        instanceName: action.instanceName,
+        status: action.status
       };
     default:
       return state;

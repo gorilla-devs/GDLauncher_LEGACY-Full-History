@@ -3518,7 +3518,8 @@ export const createBackup = instanceName => {
 
     dispatch({
       type: ActionTypes.CREATE_BACKUP,
-      instanceName
+      instanceName,
+      status: ActionTypes.BACKUP_CREATION
     });
 
     await dispatch(
@@ -3565,6 +3566,66 @@ export const createBackup = instanceName => {
     dispatch({
       type: ActionTypes.ADD_BACKUPS,
       backups: [{ name: backupName, size: zipInfo.size }]
+    });
+
+    dispatch({
+      type: ActionTypes.RESET_BACKUP
+    });
+  };
+};
+
+export const restoreBackup = (instanceName, backupName) => {
+  return async (dispatch, getState) => {
+    const instancePath = path.join(_getInstancesPath(getState()), instanceName);
+    const backupsPath = _getBackupsPath(getState());
+
+    dispatch({
+      type: ActionTypes.CREATE_BACKUP,
+      instanceName: backupName,
+      status: ActionTypes.BACKUP_RESTORE
+    });
+
+    lockfile.lock(path.join(instancePath, 'installing.lock'), err => {
+      if (err) console.error(err);
+    });
+
+    const files = await fse.readdir(instancePath);
+
+    await Promise.all(
+      files
+        .filter(file => file !== 'installing.lock')
+        .map(file => fse.remove(path.join(instancePath, file)))
+    );
+
+    const backupsZipPath = path.join(backupsPath, `${backupName}.7z`);
+
+    const sevenZipPath = await get7zPath();
+    const extract = Seven.extractFull(backupsZipPath, instancePath, {
+      $progress: true,
+      $bin: sevenZipPath
+    });
+
+    await new Promise((resolve, reject) => {
+      extract.on('progress', ({ percent }) => {
+        dispatch({
+          type: ActionTypes.UPDATE_BACKUPS_PROGRESS,
+          percentage: percent
+        });
+      });
+      extract.on('end', () => {
+        resolve();
+      });
+      extract.on('error', err => {
+        dispatch({
+          type: ActionTypes.SET_BACKUP_ERROR,
+          error: err
+        });
+        reject(err);
+      });
+    });
+
+    lockfile.unlock(path.join(instancePath, 'installing.lock'), err => {
+      if (err) console.error(err);
     });
 
     dispatch({

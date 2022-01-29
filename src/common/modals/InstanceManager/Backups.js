@@ -7,9 +7,14 @@ import styled from 'styled-components';
 import makeDir from 'make-dir';
 import { ipcRenderer } from 'electron';
 import path from 'path';
-import { createBackup, deleteBackup } from '../../reducers/actions';
+import {
+  createBackup,
+  deleteBackup,
+  restoreBackup
+} from '../../reducers/actions';
 import { _getBackupsPath, _getInstance } from '../../utils/selectors';
 import { bytesToSize } from '../../utils';
+import { BACKUP_CREATION, BACKUP_RESTORE } from '../../reducers/actionTypes';
 
 const Container = styled.div`
   padding: 0.5rem;
@@ -111,7 +116,8 @@ const Backups = ({ instanceName }) => {
 
   const percentage = useSelector(state => state.backups.percentage);
   const allBackups = useSelector(state => state.backups.backups);
-  const backupsInstanceName = useSelector(state => state.backups.instanceName);
+  const backupState = useSelector(state => state.backups);
+  const startedInstances = useSelector(state => state.startedInstances);
 
   const instanceConfig = useSelector(state =>
     _getInstance(state)(instanceName)
@@ -120,9 +126,11 @@ const Backups = ({ instanceName }) => {
 
   const dispatch = useDispatch();
 
+  const isPlaying = startedInstances[instanceName];
+
   useEffect(() => {
     const filteredBackups = allBackups.filter(bk =>
-      instanceConfig.backups.includes(bk.name)
+      (instanceConfig.backups || []).includes(bk.name)
     );
 
     setBackups(filteredBackups);
@@ -144,6 +152,7 @@ const Backups = ({ instanceName }) => {
             onClick={() => {
               dispatch(createBackup(instanceName));
             }}
+            disabled={backupState.instanceName || isPlaying}
           >
             Create Backup
           </Button>
@@ -152,19 +161,20 @@ const Backups = ({ instanceName }) => {
             icon={faFolder}
           />
         </div>
-        {backupsInstanceName && <Progress percent={percentage} />}
+        {backupState.instanceName && backupState.status === BACKUP_CREATION && (
+          <Progress percent={percentage} />
+        )}
       </Header>
       <InnerContainer>
         {backups.length === 0 && (
           <NoItemsContainers>No Mods Available</NoItemsContainers>
         )}
-        <List>
-          {backups.length > 0 &&
-            backups.map(backup => {
+        {backups.length > 0 && (
+          <List>
+            {backups.map(backup => {
               const timeStamp = backup.name.split('_')[1];
 
               const dateName = new Date(Number(timeStamp));
-
               return (
                 <Row key={backup.name}>
                   <div
@@ -178,8 +188,24 @@ const Backups = ({ instanceName }) => {
                       }
                     `}
                   >
-                    {dateName.toUTCString()}
-                    <p>{bytesToSize(backup.size)}</p>
+                    {`${dateName.toLocaleDateString()} ${dateName.getHours()}:${
+                      dateName.getMinutes() === 0 ? '00' : dateName.getMinutes()
+                    }`}
+                    <p
+                      css={`
+                        font-weight: 100;
+                      `}
+                    >
+                      {bytesToSize(backup.size)}
+                    </p>
+                  </div>
+                  <div>
+                    {backupState.instanceName &&
+                      backupState.instanceName === backup.name &&
+                      backupState.status === BACKUP_RESTORE && (
+                        // <Progress percent={percentage} size="small" />
+                        <Progress percent={percentage} steps={10} />
+                      )}
                   </div>
                   <div
                     css={`
@@ -189,7 +215,14 @@ const Backups = ({ instanceName }) => {
                       gap: 1rem;
                     `}
                   >
-                    <Button type="primary" onClick={() => {}} size="small">
+                    <Button
+                      type="primary"
+                      onClick={() =>
+                        dispatch(restoreBackup(instanceName, backup.name))
+                      }
+                      disabled={backupState.instanceName || isPlaying}
+                      size="small"
+                    >
                       Restore
                     </Button>
                     <FontAwesomeIcon
@@ -212,7 +245,8 @@ const Backups = ({ instanceName }) => {
                 </Row>
               );
             })}
-        </List>
+          </List>
+        )}
       </InnerContainer>
     </Container>
   );
