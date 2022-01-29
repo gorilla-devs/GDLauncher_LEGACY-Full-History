@@ -16,6 +16,7 @@ import he from 'he';
 import zlib from 'zlib';
 import lockfile from 'lockfile';
 import omit from 'lodash/omit';
+import debounce from 'lodash/debounce';
 import Seven from 'node-7z';
 import { push } from 'connected-react-router';
 import { spawn } from 'child_process';
@@ -3544,11 +3545,20 @@ export const createBackup = instanceName => {
     });
 
     await new Promise((resolve, reject) => {
+      let progress = 0;
+
+      const debouncedProgress = debounce(percent => {
+        if (Math.floor(percent) !== progress) {
+          progress = Math.floor(percent);
+          dispatch({
+            type: ActionTypes.UPDATE_BACKUPS_PROGRESS,
+            percentage: percent
+          });
+        }
+      }, 40);
+
       zip.on('progress', ({ percent }) => {
-        dispatch({
-          type: ActionTypes.UPDATE_BACKUPS_PROGRESS,
-          percentage: percent
-        });
+        debouncedProgress(percent);
       });
       zip.on('end', () => {
         resolve();
