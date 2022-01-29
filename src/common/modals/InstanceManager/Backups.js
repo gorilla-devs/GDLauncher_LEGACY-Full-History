@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, Progress } from 'antd';
 import styled from 'styled-components';
+import makeDir from 'make-dir';
+import { ipcRenderer } from 'electron';
+import path from 'path';
 import { createBackup, deleteBackup } from '../../reducers/actions';
-import { _getInstance } from '../../utils/selectors';
+import { _getBackupsPath, _getInstance } from '../../utils/selectors';
+import { bytesToSize } from '../../utils';
 
 const Container = styled.div`
   padding: 0.5rem;
-  flex: 1;
+  height: 100%;
 `;
 
 const Header = styled.div`
@@ -33,11 +37,38 @@ const NoItemsContainers = styled.div`
 
 const InnerContainer = styled.div`
   width: 100%;
+  height: calc(100% - 20px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+`;
+
+const List = styled.div`
+  width: 100%;
   height: calc(100% - 40px);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 10px;
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+`;
+
+const OpenFolderButton = styled(FontAwesomeIcon)`
+  transition: color 0.1s ease-in-out;
+  cursor: pointer;
+  margin: 0 10px;
+  &:hover {
+    cursor: pointer;
+    path {
+      cursor: pointer;
+      transition: color 0.1s ease-in-out;
+      color: ${props => props.theme.palette.primary.main};
+    }
+  }
 `;
 
 const Row = styled.div`
@@ -70,77 +101,118 @@ const Row = styled.div`
   }
 `;
 
+const openFolder = async p => {
+  await makeDir(p);
+  ipcRenderer.invoke('openFolder', p);
+};
+
 const Backups = ({ instanceName }) => {
   const [backups, setBackups] = useState([]);
 
   const percentage = useSelector(state => state.backups.percentage);
   const allBackups = useSelector(state => state.backups.backups);
   const backupsInstanceName = useSelector(state => state.backups.instanceName);
+
   const instanceConfig = useSelector(state =>
     _getInstance(state)(instanceName)
   );
+  const instancesPath = useSelector(_getBackupsPath);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
     const filteredBackups = allBackups.filter(bk =>
-      instanceConfig.backups.includes(bk)
+      instanceConfig.backups.includes(bk.name)
     );
 
     setBackups(filteredBackups);
-  }, [allBackups]);
+  }, [allBackups, instanceConfig]);
 
   return (
     <Container>
       <Header>
-        <Button
-          type="primary"
-          onClick={() => {
-            dispatch(createBackup(instanceName));
-          }}
+        <div
+          css={`
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+          `}
         >
-          Create Backup
-        </Button>
+          <Button
+            type="primary"
+            onClick={() => {
+              dispatch(createBackup(instanceName));
+            }}
+          >
+            Create Backup
+          </Button>
+          <OpenFolderButton
+            onClick={() => openFolder(path.join(instancesPath))}
+            icon={faFolder}
+          />
+        </div>
         {backupsInstanceName && <Progress percent={percentage} />}
       </Header>
       <InnerContainer>
         {backups.length === 0 && (
           <NoItemsContainers>No Mods Available</NoItemsContainers>
         )}
-        {backups.length > 0 &&
-          backups.map(backup => (
-            <Row key={backup}>
-              {backup}
-              <div
-                css={`
-                  display: flex;
-                  justify-content: space-between;
-                  align-ittems: center;
-                  gap: 1rem;
-                `}
-              >
-                <Button type="primary" onClick={() => {}} size="small">
-                  Restore
-                </Button>
-                <FontAwesomeIcon
-                  css={`
-                    &:hover {
-                      cursor: pointer;
-                      path {
-                        cursor: pointer;
-                        transition: all 0.1s ease-in-out;
-                        color: ${props => props.theme.palette.error.main};
+        <List>
+          {backups.length > 0 &&
+            backups.map(backup => {
+              const timeStamp = backup.name.split('_')[1];
+
+              const dateName = new Date(Number(timeStamp));
+
+              return (
+                <Row key={backup.name}>
+                  <div
+                    css={`
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      gap: 2rem;
+                      p {
+                        margin: 0;
                       }
-                    }
-                  `}
-                  onClick={() => {
-                    dispatch(deleteBackup(instanceName, backup));
-                  }}
-                  icon={faTrash}
-                />
-              </div>
-            </Row>
-          ))}
+                    `}
+                  >
+                    {dateName.toUTCString()}
+                    <p>{bytesToSize(backup.size)}</p>
+                  </div>
+                  <div
+                    css={`
+                      display: flex;
+                      justify-content: space-between;
+                      align-ittems: center;
+                      gap: 1rem;
+                    `}
+                  >
+                    <Button type="primary" onClick={() => {}} size="small">
+                      Restore
+                    </Button>
+                    <FontAwesomeIcon
+                      css={`
+                        &:hover {
+                          cursor: pointer;
+                          path {
+                            cursor: pointer;
+                            transition: all 0.1s ease-in-out;
+                            color: ${props => props.theme.palette.error.main};
+                          }
+                        }
+                      `}
+                      onClick={() => {
+                        dispatch(deleteBackup(instanceName, backup.name));
+                      }}
+                      icon={faTrash}
+                    />
+                  </div>
+                </Row>
+              );
+            })}
+        </List>
       </InnerContainer>
     </Container>
   );

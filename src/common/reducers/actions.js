@@ -238,11 +238,23 @@ export function initManifests() {
 export function initBackups() {
   return async (dispatch, getState) => {
     const backupsPath = _getBackupsPath(getState());
-    const backups = await fs.readdir(backupsPath);
+    const backupsFromDir = await fs.readdir(backupsPath);
+
+    const backups = await Promise.all(
+      backupsFromDir.map(async backup => {
+        const zipPath = path.join(backupsPath, backup);
+        const zipInfo = await fs.lstat(zipPath);
+
+        return {
+          name: backup.split('.')[0],
+          size: zipInfo.size
+        };
+      })
+    );
 
     dispatch({
       type: ActionTypes.ADD_BACKUPS,
-      backups: backups.map(backup => backup.split('.')[0])
+      backups
     });
   };
 }
@@ -3506,8 +3518,7 @@ export const createBackup = instanceName => {
 
     dispatch({
       type: ActionTypes.CREATE_BACKUP,
-      instanceName,
-      backup: backupName
+      instanceName
     });
 
     await dispatch(
@@ -3538,9 +3549,6 @@ export const createBackup = instanceName => {
         });
       });
       zip.on('end', () => {
-        dispatch({
-          type: ActionTypes.RESET_BACKUP
-        });
         resolve();
       });
       zip.on('error', err => {
@@ -3550,6 +3558,17 @@ export const createBackup = instanceName => {
         });
         reject(err);
       });
+    });
+
+    const zipInfo = await fs.lstat(backupsZipPath);
+
+    dispatch({
+      type: ActionTypes.ADD_BACKUPS,
+      backups: [{ name: backupName, size: zipInfo.size }]
+    });
+
+    dispatch({
+      type: ActionTypes.RESET_BACKUP
     });
   };
 };

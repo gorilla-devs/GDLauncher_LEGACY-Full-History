@@ -167,7 +167,7 @@ function backups(
       return {
         ...state,
         instanceName: action.instanceName,
-        backups: [...state.backups, action.backup]
+        backups: [...state.backups, ...(action?.backup || [])]
       };
     case ActionTypes.ADD_BACKUPS:
       return {
@@ -177,7 +177,7 @@ function backups(
     case ActionTypes.REMOVE_BACKUP:
       return {
         ...state,
-        backups: state.backups.filter(backup => backup !== action.name)
+        backups: state.backups.filter(backup => backup.name !== action.name)
       };
     case ActionTypes.RESET_BACKUP:
       return {
