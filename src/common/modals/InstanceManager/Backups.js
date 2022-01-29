@@ -15,6 +15,7 @@ import {
 import { _getBackupsPath, _getInstance } from '../../utils/selectors';
 import { bytesToSize } from '../../utils';
 import { BACKUP_CREATION, BACKUP_RESTORE } from '../../reducers/actionTypes';
+import { openModal } from '../../reducers/modals/actions';
 
 const Container = styled.div`
   padding: 0.5rem;
@@ -136,6 +137,30 @@ const Backups = ({ instanceName }) => {
     setBackups(filteredBackups);
   }, [allBackups, instanceConfig]);
 
+  const deleteBackupsConfirm = backupName => {
+    dispatch(
+      openModal('ActionConfirmation', {
+        message: 'Are you sure you want to delete this backup(s)?',
+        confirmCallback: () => dispatch(deleteBackup(instanceName, backupName)),
+        title: 'Confirm'
+      })
+    );
+  };
+
+  const deleteAllBackups = () => {
+    dispatch(
+      openModal('ActionConfirmation', {
+        message: 'Are you sure you want to delete all the backups?',
+        confirmCallback: () => {
+          backups.map(backup =>
+            dispatch(deleteBackup(instanceName, backup.name))
+          );
+        },
+        title: 'Confirm'
+      })
+    );
+  };
+
   return (
     <Container>
       <Header>
@@ -154,7 +179,9 @@ const Backups = ({ instanceName }) => {
             }}
             disabled={backupState.instanceName || isPlaying}
           >
-            Create Backup
+            {backupState.instanceName && backupState.status === BACKUP_CREATION
+              ? 'Creating Backup'
+              : 'Create Backup'}
           </Button>
           <OpenFolderButton
             onClick={() => openFolder(path.join(instancesPath))}
@@ -164,6 +191,25 @@ const Backups = ({ instanceName }) => {
         {backupState.instanceName && backupState.status === BACKUP_CREATION && (
           <Progress percent={percentage} />
         )}
+        <FontAwesomeIcon
+          css={`
+            margin-right: 1rem;
+            color: ${props =>
+              props.disabled && props.theme.palette.secondary.light};
+            &:hover {
+              cursor: ${props => !props.disabled && 'pointer'};
+              path {
+                cursor: ${props => !props.disabled && 'pointer'};
+                transition: all 0.1s ease-in-out;
+                color: ${props =>
+                  !props.disabled && props.theme.palette.error.main};
+              }
+            }
+          `}
+          onClick={() => backups.length > 0 && deleteAllBackups()}
+          disabled={backups.length === 0}
+          icon={faTrash}
+        />
       </Header>
       <InnerContainer>
         {backups.length === 0 && (
@@ -236,9 +282,7 @@ const Backups = ({ instanceName }) => {
                           }
                         }
                       `}
-                      onClick={() => {
-                        dispatch(deleteBackup(instanceName, backup.name));
-                      }}
+                      onClick={() => deleteBackupsConfirm(backup.name)}
                       icon={faTrash}
                     />
                   </div>
