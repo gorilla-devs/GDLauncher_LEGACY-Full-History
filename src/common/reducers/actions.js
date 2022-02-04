@@ -105,6 +105,7 @@ import {
   getPatchedInstanceType,
   getPlayerSkin,
   isInstanceFolderPath,
+  isInstanceConfigPath,
   isMod,
   librariesMapper,
   mavenToArray,
@@ -2382,8 +2383,11 @@ export const startListener = () => {
             instanceName,
             'config.json'
           );
+          console.log('CONFIG');
           try {
             const config = await fse.readJSON(configPath);
+
+            console.log('TEST', config);
 
             if (!config.loader) {
               throw new Error(`Config for ${instanceName} could not be parsed`);
@@ -2650,6 +2654,11 @@ export const startListener = () => {
                   .split(path.sep)[0];
                 processRenamedInstance(oldInstanceName, instanceName);
               }
+            } else if (
+              isInstanceConfigPath(filePath, instancesPath) &&
+              action === 0
+            ) {
+              processAddedInstance(instanceName);
             }
           }
         }
@@ -3586,7 +3595,11 @@ export const createBackup = instanceName => {
   };
 };
 
-export const restoreBackup = (instanceName, backupName) => {
+export const restoreBackup = (
+  instanceName,
+  backupName,
+  isImportedAsInstance
+) => {
   return async (dispatch, getState) => {
     const instancePath = path.join(_getInstancesPath(getState()), instanceName);
     const backupsPath = _getBackupsPath(getState());
@@ -3597,17 +3610,25 @@ export const restoreBackup = (instanceName, backupName) => {
       status: ActionTypes.BACKUP_RESTORE
     });
 
-    lockfile.lock(path.join(instancePath, 'installing.lock'), err => {
-      if (err) console.error(err);
-    });
+    if (isImportedAsInstance) {
+      await makeDir(instancePath);
+    }
+    if (!isImportedAsInstance) {
+      lockfile.lock(path.join(instancePath, 'installing.lock'), err => {
+        if (err) console.error(err);
+      });
+    }
 
-    const files = await fse.readdir(instancePath);
+    console.log('instancePath', instancePath, backupName);
 
-    await Promise.all(
-      files
-        .filter(file => file !== 'installing.lock')
-        .map(file => fse.remove(path.join(instancePath, file)))
-    );
+    if (!isImportedAsInstance) {
+      const files = await fse.readdir(instancePath);
+      await Promise.all(
+        files
+          .filter(file => file !== 'installing.lock')
+          .map(file => fse.remove(path.join(instancePath, file)))
+      );
+    }
 
     const backupsZipPath = path.join(backupsPath, `${backupName}.7z`);
 
@@ -3645,9 +3666,11 @@ export const restoreBackup = (instanceName, backupName) => {
       });
     });
 
-    lockfile.unlock(path.join(instancePath, 'installing.lock'), err => {
-      if (err) console.error(err);
-    });
+    if (!isImportedAsInstance) {
+      lockfile.unlock(path.join(instancePath, 'installing.lock'), err => {
+        if (err) console.error(err);
+      });
+    }
 
     dispatch({
       type: ActionTypes.RESET_BACKUP

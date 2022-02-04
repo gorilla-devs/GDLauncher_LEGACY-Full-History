@@ -38,6 +38,7 @@ const Import = ({
   const openFileDialog = async () => {
     const dialog = await ipcRenderer.invoke('openFileDialog');
     if (dialog.canceled) return;
+
     setLocalValue(dialog.filePaths[0]);
   };
 

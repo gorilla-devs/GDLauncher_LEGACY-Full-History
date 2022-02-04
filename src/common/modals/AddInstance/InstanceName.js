@@ -13,7 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Input } from 'antd';
 import { transparentize } from 'polished';
-import { addToQueue } from '../../reducers/actions';
+import { addToQueue, restoreBackup } from '../../reducers/actions';
 import { closeModal, openModal } from '../../reducers/modals/actions';
 import {
   downloadAddonZip,
@@ -32,13 +32,12 @@ const InstanceName = ({
   setStep,
   version,
   modpack,
-  setVersion,
-  setModpack,
   importZipPath,
-  step
+  step,
+  isBackup
 }) => {
   const mcName = (
-    modpack?.name.replace(/\W/g, ' ') ||
+    (isBackup ? modpack?.name : modpack?.name.replace(/\W/g, ' ')) ||
     (version && `Minecraft ${version?.loaderType}`) ||
     ''
   ).trim();
@@ -97,9 +96,32 @@ const InstanceName = ({
   };
 
   const createInstance = async localInstanceName => {
+    console.log(
+      'AAAA',
+      !version || !localInstanceName,
+      version,
+      localInstanceName
+    );
     if (!version || !localInstanceName) return;
 
+    console.log(
+      'isBackup',
+      isBackup,
+      localInstanceName,
+      version,
+      modpack
+    );
     const initTimestamp = Date.now();
+
+    if (isBackup) {
+      dispatch(restoreBackup(localInstanceName, modpack.backupName, true));
+
+      if (Date.now() - initTimestamp < 2000) {
+        await wait(2000 - (Date.now() - initTimestamp));
+      }
+
+      return dispatch(closeModal());
+    }
 
     const isCurseForgeModpack = Boolean(version?.source === CURSEFORGE);
     const isFTBModpack = Boolean(modpack?.art);

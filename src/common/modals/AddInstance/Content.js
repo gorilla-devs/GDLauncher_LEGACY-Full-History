@@ -5,7 +5,8 @@ import { Transition } from 'react-transition-group';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faLongArrowAltRight,
-  faArchive
+  faArchive,
+  faFileUpload
 } from '@fortawesome/free-solid-svg-icons';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Radio } from 'antd';
@@ -16,6 +17,7 @@ import NewInstance from './NewInstance';
 import minecraftIcon from '../../assets/minecraftIcon.png';
 import curseForgeIcon from '../../assets/curseforgeIcon.webp';
 import ftbIcon from '../../assets/ftbIcon.webp';
+import ImportBackup from './ImportBackup';
 
 const Content = ({
   in: inProp,
@@ -26,30 +28,64 @@ const Content = ({
   version,
   setModpack,
   importZipPath,
-  setImportZipPath
+  setImportZipPath,
+  setIsBackup
 }) => {
   const [overrideNextStepOnClick, setOverrideNextStepOnClick] = useState(null);
   const [loading, setLoading] = useState(false);
 
   let pages = [
-    <NewInstance setVersion={setVersion} setModpack={setModpack} />,
-    <CurseForgeModpacks
-      setVersion={setVersion}
-      setStep={setStep}
-      setModpack={setModpack}
-    />,
-    <Import
-      setVersion={setVersion}
-      setModpack={setModpack}
-      importZipPath={importZipPath}
-      setImportZipPath={setImportZipPath}
-      setOverrideNextStepOnClick={setOverrideNextStepOnClick}
-    />,
-    <FTBModpacks
-      setVersion={setVersion}
-      setStep={setStep}
-      setModpack={setModpack}
-    />
+    {
+      component: (
+        <NewInstance setVersion={setVersion} setModpack={setModpack} />
+      ),
+      showArrow: true
+    },
+    {
+      component: (
+        <CurseForgeModpacks
+          setVersion={setVersion}
+          setStep={setStep}
+          setModpack={setModpack}
+        />
+      ),
+      showArrow: false
+    },
+    {
+      component: (
+        <Import
+          setVersion={setVersion}
+          setModpack={setModpack}
+          importZipPath={importZipPath}
+          setImportZipPath={setImportZipPath}
+          setOverrideNextStepOnClick={setOverrideNextStepOnClick}
+        />
+      ),
+      showArrow: true
+    },
+    {
+      component: (
+        <FTBModpacks
+          setVersion={setVersion}
+          setStep={setStep}
+          setModpack={setModpack}
+        />
+      ),
+      showArrow: false
+    },
+    {
+      component: (
+        <ImportBackup
+          setVersion={setVersion}
+          setModpack={setModpack}
+          setIsBackup={setIsBackup}
+          importZipPath={importZipPath}
+          setImportZipPath={setImportZipPath}
+          setOverrideNextStepOnClick={setOverrideNextStepOnClick}
+        />
+      ),
+      showArrow: true
+    }
   ];
 
   return (
@@ -126,6 +162,16 @@ const Content = ({
                     />
                     Import Zip
                   </Radio.Button>
+                  <Radio.Button value={4}>
+                    <FontAwesomeIcon
+                      icon={faFileUpload}
+                      css={`
+                        margin-right: 4px;
+                        cursor: pointer;
+                      `}
+                    />
+                    Import Backup
+                  </Radio.Button>
                 </Radio.Group>
               </div>
               <div
@@ -133,17 +179,17 @@ const Content = ({
                   height: calc(100% - 50px);
                 `}
               >
-                {pages[page]}
+                {pages[page].component}
               </div>
             </div>
             <div
+              pages={pages}
               page={page}
               css={`
                 position: absolute;
                 bottom: 20px;
                 right: 20px;
-                opacity: ${props =>
-                  props.page === 0 || props.page === 2 ? 1 : 0};
+                opacity: ${props => (props.pages[props.page] ? 1 : 0)};
               `}
             >
               <div

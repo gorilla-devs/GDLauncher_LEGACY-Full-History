@@ -553,6 +553,10 @@ ipcMain.handle('openFolder', (e, folderPath) => {
   shell.openPath(folderPath);
 });
 
+ipcMain.handle('openItemInFolder', (e, filePathInFolder) => {
+  shell.showItemInFolder(filePathInFolder);
+});
+
 ipcMain.handle('open-devtools', () => {
   mainWindow.webContents.openDevTools({ mode: 'undocked' });
 });

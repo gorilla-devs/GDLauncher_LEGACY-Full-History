@@ -10,6 +10,7 @@ const AddInstance = ({ defaultPage }) => {
   const [version, setVersion] = useState(null);
   const [step, setStep] = useState(0);
   const [modpack, setModpack] = useState(null);
+  const [isBackup, setIsBackup] = useState(false);
   const [importZipPath, setImportZipPath] = useState('');
   const [page, setPage] = useState(defaultPage);
 
@@ -33,6 +34,7 @@ const AddInstance = ({ defaultPage }) => {
           version={version}
           setModpack={setModpack}
           modpack={modpack}
+          setIsBackup={setIsBackup}
           setImportZipPath={setImportZipPath}
           importZipPath={importZipPath}
         />
@@ -41,6 +43,7 @@ const AddInstance = ({ defaultPage }) => {
           in={step === 1}
           setStep={setStep}
           modpack={modpack}
+          isBackup={isBackup}
           setVersion={setVersion}
           setModpack={setModpack}
           importZipPath={importZipPath}

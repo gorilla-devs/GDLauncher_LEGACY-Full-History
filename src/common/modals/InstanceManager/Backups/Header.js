@@ -1,16 +1,12 @@
 import React from 'react';
-import { faFolder, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, Progress } from 'antd';
-import { ipcRenderer } from 'electron';
-import makeDir from 'make-dir';
-import path from 'path';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { createBackup, deleteBackup } from '../../../reducers/actions';
 import { BACKUP_CREATION } from '../../../reducers/actionTypes';
 import { openModal } from '../../../reducers/modals/actions';
-import { _getBackupsPath } from '../../../utils/selectors';
 
 const Container = styled.div`
   height: 40px;
@@ -23,30 +19,10 @@ const Container = styled.div`
   gap: 10px;
 `;
 
-const OpenFolderButton = styled(FontAwesomeIcon)`
-  transition: color 0.1s ease-in-out;
-  cursor: pointer;
-  margin: 0 10px;
-  &:hover {
-    cursor: pointer;
-    path {
-      cursor: pointer;
-      transition: color 0.1s ease-in-out;
-      color: ${props => props.theme.palette.primary.main};
-    }
-  }
-`;
-
-const openFolder = async p => {
-  await makeDir(p);
-  ipcRenderer.invoke('openFolder', p);
-};
-
 const Header = ({ instanceName, backups }) => {
   const dispatch = useDispatch();
   const backupState = useSelector(state => state.backups);
   const percentage = useSelector(state => state.backups.percentage);
-  const instancesPath = useSelector(_getBackupsPath);
 
   const startedInstances = useSelector(state => state.startedInstances);
   const isPlaying = startedInstances[instanceName];
@@ -91,10 +67,6 @@ const Header = ({ instanceName, backups }) => {
             ? 'Creating Backup'
             : 'Create Backup'}
         </Button>
-        <OpenFolderButton
-          onClick={() => openFolder(path.join(instancesPath))}
-          icon={faFolder}
-        />
       </div>
       {backupState.instanceName &&
         backupState.instanceName === instanceName &&
