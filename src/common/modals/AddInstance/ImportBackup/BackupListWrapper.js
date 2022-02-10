@@ -40,7 +40,6 @@ const BackupHover = styled.div`
     align-items: center;
     cursor: pointer;
     padding: 0.2rem;
-    margin-right: 0.5rem;
     background-color: transparent;
     border-radius: 4px;
     width: 100px;
