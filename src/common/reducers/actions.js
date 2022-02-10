@@ -2383,11 +2383,8 @@ export const startListener = () => {
             instanceName,
             'config.json'
           );
-          console.log('CONFIG');
           try {
             const config = await fse.readJSON(configPath);
-
-            console.log('TEST', config);
 
             if (!config.loader) {
               throw new Error(`Config for ${instanceName} could not be parsed`);
@@ -2487,6 +2484,13 @@ export const startListener = () => {
             event.file || event.oldFile
           );
 
+          const instanceName = convertCompletePathToInstance(
+            completePath,
+            instancesPath
+          )
+            .substr(1)
+            .split(path.sep)[0];
+
           const isRename = event.newFile && event.oldFile;
 
           if (
@@ -2512,6 +2516,11 @@ export const startListener = () => {
                 newFilePath: path.join(event.newDirectory, event.newFile)
               })
             };
+          } else if (
+            isInstanceConfigPath(completePath, instancesPath) &&
+            event.action === 0
+          ) {
+            processAddedInstance(instanceName);
           }
 
           if (
@@ -2654,11 +2663,6 @@ export const startListener = () => {
                   .split(path.sep)[0];
                 processRenamedInstance(oldInstanceName, instanceName);
               }
-            } else if (
-              isInstanceConfigPath(filePath, instancesPath) &&
-              action === 0
-            ) {
-              processAddedInstance(instanceName);
             }
           }
         }
@@ -3603,23 +3607,17 @@ export const restoreBackup = (
   return async (dispatch, getState) => {
     const instancePath = path.join(_getInstancesPath(getState()), instanceName);
     const backupsPath = _getBackupsPath(getState());
-
     dispatch({
       type: ActionTypes.CREATE_BACKUP,
       instanceName: backupName,
       status: ActionTypes.BACKUP_RESTORE
     });
 
-    if (isImportedAsInstance) {
-      await makeDir(instancePath);
-    }
     if (!isImportedAsInstance) {
       lockfile.lock(path.join(instancePath, 'installing.lock'), err => {
         if (err) console.error(err);
       });
     }
-
-    console.log('instancePath', instancePath, backupName);
 
     if (!isImportedAsInstance) {
       const files = await fse.readdir(instancePath);
@@ -3633,6 +3631,9 @@ export const restoreBackup = (
     const backupsZipPath = path.join(backupsPath, `${backupName}.7z`);
 
     const sevenZipPath = await get7zPath();
+    // if (isImportedAsInstance) {
+    // }
+    await makeDir(instancePath);
     const extract = Seven.extractFull(backupsZipPath, instancePath, {
       $progress: true,
       $bin: sevenZipPath

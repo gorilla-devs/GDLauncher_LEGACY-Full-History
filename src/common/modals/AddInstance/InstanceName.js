@@ -96,24 +96,12 @@ const InstanceName = ({
   };
 
   const createInstance = async localInstanceName => {
-    console.log(
-      'AAAA',
-      !version || !localInstanceName,
-      version,
-      localInstanceName
-    );
     if (!version || !localInstanceName) return;
 
-    console.log(
-      'isBackup',
-      isBackup,
-      localInstanceName,
-      version,
-      modpack
-    );
     const initTimestamp = Date.now();
 
     if (isBackup) {
+      console.log('CREATE INSTANCE BACKUP');
       dispatch(restoreBackup(localInstanceName, modpack.backupName, true));
 
       if (Date.now() - initTimestamp < 2000) {

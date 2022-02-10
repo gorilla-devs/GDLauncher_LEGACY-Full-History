@@ -76,12 +76,10 @@ const Content = ({
     {
       component: (
         <ImportBackup
+          setStep={setStep}
           setVersion={setVersion}
           setModpack={setModpack}
           setIsBackup={setIsBackup}
-          importZipPath={importZipPath}
-          setImportZipPath={setImportZipPath}
-          setOverrideNextStepOnClick={setOverrideNextStepOnClick}
         />
       ),
       showArrow: true
@@ -189,7 +187,8 @@ const Content = ({
                 position: absolute;
                 bottom: 20px;
                 right: 20px;
-                opacity: ${props => (props.pages[props.page] ? 1 : 0)};
+                opacity: ${props =>
+                  props.pages[props.page].showArrow ? 1 : 0};
               `}
             >
               <div

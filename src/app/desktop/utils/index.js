@@ -903,10 +903,8 @@ export const isInstanceFolderPath = (f, instancesPath) =>
     convertCompletePathToInstance(f, instancesPath)
   );
 
-export const isInstanceConfigPath = (f, instancesPath) =>
-  /[a-zA-Z]:(\/|\\)+[a-zA-Z0-9\\-_/-]*(\/|\\)+(config.json)/.test(
-    convertCompletePathToInstance(f, instancesPath)
-  );
+export const isInstanceConfigPath = f =>
+  /[a-zA-Z]:(\/|\\)+[a-zA-Z0-9\\-_/-]*(\/|\\)+(config.json)/.test(f);
 
 export const isFileModFabric = file => {
   return (
