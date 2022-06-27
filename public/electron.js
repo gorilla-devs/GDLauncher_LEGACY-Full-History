@@ -23,10 +23,7 @@ const {
 } = require('base64url');
 const { URL } = require('url');
 const UserAgent = require('user-agents');
-const nsfw = require('./native/nsfw');
 const napi = require('./native/napi');
-
-// console.log(napi.fibonacci(10));
 
 const fs = fss.promises;
 
@@ -384,7 +381,7 @@ app.on('ready', createWindow);
 
 app.on('window-all-closed', async () => {
   if (watcher) {
-    await watcher.stop();
+    napi.stopNotifier(watcher);
     watcher = null;
   }
   app.quit();
@@ -392,7 +389,7 @@ app.on('window-all-closed', async () => {
 
 app.on('before-quit', async () => {
   if (watcher) {
-    await watcher.stop();
+    napi.stopNotifier(watcher);
     watcher = null;
   }
   if (mainWindow) {
@@ -525,7 +522,7 @@ ipcMain.handle('show-window', () => {
 ipcMain.handle('quit-app', async () => {
   if (watcher) {
     log.log('Stopping listener');
-    await watcher.stop();
+    napi.stopNotifier(watcher);
     watcher = null;
   }
   mainWindow.close();
@@ -595,7 +592,7 @@ ipcMain.handle('appRestart', async () => {
   log.log('Restarting app');
   if (watcher) {
     log.log('Stopping listener');
-    await watcher.stop();
+    napi.stopNotifier(watcher);
     watcher = null;
   }
   app.relaunch();
@@ -845,31 +842,67 @@ ipcMain.handle('start-listener', async (e, dirPath) => {
   try {
     log.log('Trying to start listener');
     if (watcher) {
-      await watcher.stop();
+      napi.stopNotifier(watcher);
       watcher = null;
     }
-    watcher = await nsfw(dirPath, events => {
-      log.log(`Detected ${events.length} events from listener`);
-      mainWindow.webContents.send('listener-events', events);
+
+    watcher = napi.startNotifier(dirPath, (_, events) => {
+      if (!events) return;
+      const ev = [events].map(v => {
+        console.log(Date.now(), 'CLG', v);
+        let eventPayload = {};
+
+        switch (v.eventType) {
+          case 0:
+          case 1:
+          case 2: {
+            eventPayload = {
+              file: path.basename(v.path),
+              directory: path.parse(v.path).dir
+            };
+            break;
+          }
+          case 3: {
+            eventPayload = {};
+            break;
+          }
+
+          default: {
+            break;
+          }
+        }
+
+        return {
+          action: v.eventType,
+          ...eventPayload
+        };
+      });
+
+      mainWindow.webContents.send('listener-events', ev);
     });
+
+    // watcher = await nsfw(dirPath, events => {
+    //   console.log('CPP', events);
+    //   log.log(`Detected ${events.length} events from listener`);
+    //   mainWindow.webContents.send('listener-events', events);
+    // });
     log.log('Started listener');
-    return watcher.start();
   } catch (err) {
     log.error(err);
-    return Promise.reject(err);
+    throw err;
   }
 });
 
 ipcMain.handle('stop-listener', async () => {
   if (watcher) {
     log.log('Stopping listener');
-    await watcher.stop();
+    napi.stopNotifier(watcher);
     watcher = null;
   }
 });
 
 ipcMain.handle('calculateMurmur2FromPath', async (e, filePath) => {
-  const res = await napi.computePathMurmur(filePath);
+  const [res] = await napi.computeMurmur([filePath]);
   return res.toString();
 });
 

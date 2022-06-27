@@ -2322,6 +2322,7 @@ export const startListener = () => {
       const processChange = async () => {
         const newState = getState();
         const instance = _getInstance(newState)(instanceName);
+        console.log(`Processing ${fileName}`);
         const isInConfig = (instance?.mods || []).find(
           mod => mod.fileName === path.basename(fileName)
         );
@@ -2542,6 +2543,7 @@ export const startListener = () => {
     };
 
     ipcRenderer.on('listener-events', async (e, events) => {
+      console.log(events);
       await Promise.all(
         events.map(async event => {
           // Using oldFile instead of newFile is intentional.
@@ -2707,6 +2709,7 @@ export const startListener = () => {
               }
             } else if (isInstanceFolderPath(filePath, instancesPath)) {
               if (action === 0) {
+                console.log('INSTANCE ADDED');
                 processAddedInstance(instanceName);
               } else if (action === 1) {
                 processRemovedInstance(instanceName);
